@@ -114,32 +114,13 @@ export MEITUAN_TRAVEL_DEBUG=0
 
 ## ⚙️ How It Works
 
-```
-┌──────────────┐     stdio      ┌──────────────────────┐
-│  MCP Client  │ ◄────────────► │  python src/__main__ │
-│ (Claude/Cursor│                │      .py (FastMCP)   │
-└──────┬───────┘                └──────────┬───────────┘
-       │                                     │
-       │  tool call                          │  subprocess
-       ▼                                     ▼
-┌──────────────┐     node       ┌──────────────────────┐
-│  Agent asks  │ ─────────────► │  @fly-ai/flyai-cli   │
-│  in natural  │                │   (official Fliggy)   │
-│   language   │                └──────────┬───────────┘
-└──────────────┘                           │
-                                           │  HTTPS
-                                           ▼
-                                  ┌──────────────────────┐
-                                  │  Fliggy FlyAI API    │
-                                  │  flyai.open.fliggy.  │
-                                  │         com           │
-                                  └──────────┬───────────┘
-                                             │
-                                             ▼  JSON
-                                  ┌──────────────────────┐
-                                  │  Results rendered to │
-                                  │      the agent       │
-                                  └──────────────────────┘
+```mermaid
+flowchart LR
+    C["MCP Client<br/>(Claude Desktop / Cursor)"] <-->|"stdio (JSON-RPC)"| S["FastMCP Server<br/>python src/__main__.py"]
+    S -->|"spawns subprocess"| CLI["@fly-ai/flyai-cli<br/>(official Fliggy)"]
+    CLI -->|"HTTPS + FLYAI_API_KEY"| API["Fliggy FlyAI API<br/>flyai.open.fliggy.com"]
+    API -->|"JSON results"| R[Results rendered to the agent]
+    R -.->|"sent back through MCP"| C
 ```
 
 1. Your MCP client spawns `python src/__main__.py` as a stdio subprocess.

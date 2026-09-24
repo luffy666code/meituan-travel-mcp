@@ -114,32 +114,13 @@ export MEITUAN_TRAVEL_DEBUG=0
 
 ## ⚙️ 工作原理
 
-```
-┌──────────────┐     stdio      ┌──────────────────────┐
-│  MCP 客户端   │ ◄────────────► │  python src/__main__ │
-│(Claude/Cursor)│                │      .py (FastMCP)   │
-└──────┬───────┘                └──────────┬───────────┘
-       │                                     │
-       │  工具调用                            │  子进程
-       ▼                                     ▼
-┌──────────────┐     node       ┌──────────────────────┐
-│  Agent 用自然 │ ─────────────► │  @fly-ai/flyai-cli   │
-│   语言提问    │                │   （飞猪官方 CLI）     │
-└──────────────┘                └──────────┬───────────┘
-                                             │
-                                             │  HTTPS
-                                             ▼
-                                  ┌──────────────────────┐
-                                  │  飞猪 FlyAI API      │
-                                  │  flyai.open.fliggy.  │
-                                  │         com           │
-                                  └──────────┬───────────┘
-                                             │
-                                             ▼  JSON
-                                  ┌──────────────────────┐
-                                  │  结果渲染后返回给     │
-                                  │      Agent           │
-                                  └──────────────────────┘
+```mermaid
+flowchart LR
+    C["MCP 客户端<br/>(Claude Desktop / Cursor)"] <-->|"stdio（JSON-RPC）"| S["FastMCP 服务器<br/>python src/__main__.py"]
+    S -->|"启动子进程"| CLI["@fly-ai/flyai-cli<br/>(飞猪官方 CLI)"]
+    CLI -->|"HTTPS + FLYAI_API_KEY"| API["飞猪 FlyAI API<br/>flyai.open.fliggy.com"]
+    API -->|"JSON 结果"| R[结果渲染后返回给 Agent]
+    R -.->|"通过 MCP 回传"| C
 ```
 
 1. MCP 客户端以 stdio 子进程方式启动 `python src/__main__.py`。
